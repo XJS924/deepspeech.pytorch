@@ -11,6 +11,7 @@ from tqdm import tqdm
 from warpctc_pytorch import CTCLoss
 
 from data.data_loader import AudioDataLoader, SpectrogramDataset, BucketingSampler, DistributedBucketingSampler
+from data.distributed import DistributedDataParallel
 from decoder import GreedyDecoder
 from model import DeepSpeech, supported_rnns
 
@@ -64,9 +65,6 @@ parser.add_argument('--no-bidirectional', dest='bidirectional', action='store_fa
 parser.add_argument('--dist_url', default='tcp://127.0.0.1:1550', type=str,
                     help='url used to set up distributed training')
 parser.add_argument('--dist_backend', default='gloo', type=str, help='distributed backend')
-parser.add_argument('--world_size', default=1, type=int, help='number of distributed processes')
-parser.add_argument('--rank', default=0, type=int, help='The rank of this process')
-
 torch.manual_seed(123456)
 torch.cuda.manual_seed_all(123456)
 
@@ -241,7 +239,7 @@ if __name__ == '__main__':
         model = torch.nn.DataParallel(model).cuda()
     elif args.cuda and args.distributed:
         model.cuda()
-        model = torch.nn.parallel.DistributedDataParallel(model)
+        model = DistributedDataParallel(model)
 
     print(model)
     print("Number of parameters: %d" % DeepSpeech.get_param_size(model))
